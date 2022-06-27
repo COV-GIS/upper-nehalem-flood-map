@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "ESNext",
+      "dom",
+    ],
+    "strict": true,
+    "esModuleInterop": true,
+    "importHelpers": true,
+    "paths": {
+      "tslib": ["./node_modules/tslib/tslib.d.ts"]
+    },
+    "experimentalDecorators": true,
+    "jsx": "react",
+    "jsxFactory": "tsx",
+    "types": [
+      "@esri/calcite-components",
+      "luxon",
+      "papaparse"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

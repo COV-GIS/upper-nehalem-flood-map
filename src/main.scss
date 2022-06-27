@@ -1,0 +1,183 @@
+/** main style entry point **/
+
+// fonts
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400&display=swap");
+@import url("https://use.fontawesome.com/releases/v6.1.1/css/all.css");
+
+// esri widgets to include
+$include_Attribution: true;
+$include_BasemapToggle: true;
+$include_LayerList: true;
+$include_Legend: true;
+$include_Popup: true;
+$include_Search: true;
+
+// @arcgis/core font paths for vite to resolve
+$icomoon-font-path: "@arcgis/core/assets/esri/themes/base/icons/fonts/";
+$calcite-fonts-path: "@arcgis/core/assets/esri/themes/base/fonts/fonts/";
+
+$font-family: Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+  "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+// @arcgis/core sass
+@import "@arcgis/core/assets/esri/themes/base/core";
+
+// bootstrap theme
+@import "bootswatch/dist/flatly/bootstrap.min.css";
+
+body {
+  font-family: $font-family;
+}
+
+//////////////////////////
+// theme
+//////////////////////////
+
+$brand: #7b8a8b;
+$brand-hover: darken($brand, 7.5);
+$brand-press: darken($brand, 13);
+$link-underline: rgba($brand-press, 0.4);
+$brand-dark: darken($brand, 20);
+$box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+
+:root {
+  --calcite-ui-brand: #{$brand};
+  --calcite-ui-brand-hover: #{$brand-hover};
+  --calcite-ui-brand-press: #{$brand-press};
+  --calcite-ui-text-link: #{$brand-hover};
+  --calcite-link-blue-underline: #{$link-underline};
+}
+
+.calcite-theme-light {
+  --calcite-ui-brand: #{$brand};
+  --calcite-ui-brand-hover: #{$brand-hover};
+  --calcite-ui-brand-press: #{$brand-press};
+  --calcite-ui-text-link: #{$brand-hover};
+  --calcite-link-blue-underline: #{$link-underline};
+}
+
+//////////////////////////
+// arcgis js api overrides
+//////////////////////////
+
+// browsers have gotten weird with the focused view outline
+.esri-view .esri-view-surface--inset-outline:focus::after {
+  outline: none !important;
+  outline-offset: 0;
+}
+
+// tighten up ui
+.esri-ui-top-right {
+  top: -5px;
+  right: -5px;
+}
+
+.esri-ui-top-left {
+  top: -5px;
+  left: -5px;
+}
+
+.esri-ui-bottom-left {
+  bottom: -5px;
+  left: -5px;
+}
+
+.esri-ui-bottom-right {
+  bottom: -5px;
+  right: -5px;
+}
+
+// smaller basemap toggle
+.esri-basemap-toggle {
+  width: 59px;
+  height: 59px;
+  .esri-basemap-toggle__container,
+  .esri-basemap-toggle__image {
+    width: 54px;
+    height: 54px;
+    border-radius: var(--calcite-border-radius);
+  }
+}
+
+//////////////////////////
+// app
+//////////////////////////
+
+.flood-map-app--header {
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .nav li {
+    text-align: center;
+  }
+
+  .nav-link {
+    padding: 0.5rem 1.5rem;
+  }
+}
+
+.flood-map-app--view {
+  height: 100%;
+  width: 100%;
+}
+
+
+.esri-search {
+  width: 25vw;
+  min-width: 240px;
+  max-width: 420px;
+  transition: width var(--calcite-animation-timing);
+  border-radius: var(--calcite-border-radius);
+
+  * {
+    outline: none !important;
+  }
+
+  .esri-widget--button {
+    width: 40px;
+  }
+  .esri-widget--button,
+  .esri-input {
+    height: 40px;
+    // background: lighten($brand-dark, 7.5%);
+    background: $brand;
+    color: white;
+  }
+  .esri-search__input {
+    border-bottom-left-radius: var(--calcite-border-radius);
+    border-top-left-radius: var(--calcite-border-radius);
+    &::-webkit-input-placeholder,
+    &::placeholder {
+      color: rgba(white, 0.6);
+    }
+  }
+  .esri-search__sources-button {
+    border: none;
+  }
+  .esri-search__submit-button {
+    border: none;
+    border-bottom-right-radius: var(--calcite-border-radius);
+    border-top-right-radius: var(--calcite-border-radius);
+  }
+  .esri-menu {
+    margin-top: 4px;
+  }
+  .esri-menu__list-item--active,
+  .esri-menu__list-item--active:hover,
+  .esri-menu__list-item--active:focus {
+    background-color: lighten($brand, 40%);
+    border-left-color: $brand;
+  }
+
+  .esri-menu__list-item--focus,
+  .esri-menu__list-item:hover,
+  .esri-menu__list-item:focus {
+    background-color: lighten($brand, 40%);
+  }
+
+  .esri-search__source.esri-menu__list-item:active {
+    background-color: lighten($brand, 30%);
+    // background-color: $brand;
+  }
+}
