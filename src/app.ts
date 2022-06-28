@@ -33,11 +33,13 @@ const title = 'Vernonia';
 
 const load = async () => {
   const base = new MapImageLayer({
-    url: 'https://gis.vernonia-or.gov/server/rest/services/UpperNehalemFlood/UNF_Base/MapServer',
+    portalItem: {
+      id: 'c74b5bf6a1cb4be881abe4fc811909bd',
+    },
   });
 
   const boundary = new FeatureLayer({
-    url: 'https://gis.vernonia-or.gov/server/rest/services/UpperNehalemFlood/UNF_Base/MapServer/1',
+    url: 'https://gis.vernonia-or.gov/server/rest/services/UpperNehalemFlood/UNF_Base/MapServer/15',
   });
 
   await boundary.load();
@@ -82,6 +84,7 @@ const load = async () => {
       },
     }),
     boundary: boundaryGeometry as esri.Polygon,
+    baseLayer: base,
   });
 };
 
