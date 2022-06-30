@@ -36,6 +36,7 @@ const load = async () => {
     portalItem: {
       id: 'c74b5bf6a1cb4be881abe4fc811909bd',
     },
+    title: 'Upper Nehalem Flood',
   });
 
   const boundary = new FeatureLayer({
@@ -64,6 +65,9 @@ const load = async () => {
       ground: 'world-elevation',
     }),
     extent: boundary.fullExtent,
+    padding: {
+      left: 48,
+    },
     constraints: {
       rotationEnabled: false,
     },
