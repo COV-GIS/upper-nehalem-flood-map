@@ -1,0 +1,13 @@
+.flood-info--info {
+  display: flex;
+  flex-flow: column;
+  gap: 0.1875rem;
+  margin: 1rem 0;
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.flood-info--progress {
+  padding-bottom: 1rem;
+}

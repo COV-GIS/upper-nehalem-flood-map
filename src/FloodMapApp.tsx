@@ -1,37 +1,40 @@
 import esri = __esri;
+
+interface props extends Object {
+  panelState: 'none' | 'info' | 'layers' | 'legend' | 'print';
+}
+
 // core
-import esriRequest from '@arcgis/core/request';
-import { watch, whenOnce } from '@arcgis/core/core/reactiveUtils';
-import Collection from '@arcgis/core/core/Collection';
+import { whenOnce } from '@arcgis/core/core/reactiveUtils';
 // widget
 import { subclass, property } from '@arcgis/core/core/accessorSupport/decorators';
 import Widget from '@arcgis/core/widgets/Widget';
-import { storeNode, tsx } from '@arcgis/core/widgets/support/widget';
+import { tsx } from '@arcgis/core/widgets/support/widget';
 // graphic and geometry
 import { contains } from '@arcgis/core/geometry/geometryEngine';
 import Graphic from '@arcgis/core/Graphic';
-import { SimpleMarkerSymbol, TextSymbol } from '@arcgis/core/symbols';
+import { SimpleMarkerSymbol } from '@arcgis/core/symbols';
 // widgets
 import Search from '@arcgis/core/widgets/Search';
 import BasemapToggle from '@arcgis/core/widgets/BasemapToggle';
 import Legend from '@arcgis/core/widgets/Legend';
 import ViewControl from '@vernonia/core/dist/widgets/ViewControl';
 import '@vernonia/core/dist/widgets/ViewControl.css';
-
 import Loader from '@vernonia/core/dist/widgets/Loader';
 import '@vernonia/core/dist/widgets/Loader.css';
 import Disclaimer from '@vernonia/core/dist/widgets/Disclaimer';
 
+import FloodInfo from './widgets/FloodInfo';
+import './widgets/FloodInfo.scss';
+
+import PrintFIRMetteModal from './widgets/PrintFIRMetteModal';
+import './widgets/PrintFIRMetteModal.scss';
+
 // styles
 const CSS = {
-  // widget
   base: 'flood-map-app',
   header: 'flood-map-app--header',
   view: 'flood-map-app--view',
-
-  // info widget
-  progress: 'flood-map-app--progress',
-  info: 'flood-map-app--info',
 };
 
 let KEY = 0;
@@ -119,7 +122,11 @@ export default class FloodMapApp extends Widget {
       });
     });
 
-    this.info = new Info();
+    const floodInfo = (this.floodInfo = new FloodInfo());
+
+    const printFIRMette = floodInfo.on('print-firmette', (): void => {
+      this.printFIRMetteModal.print(this._infoPoint);
+    });
 
     ////////////////////////////////////////
     // assure no view or dom race conditions
@@ -138,7 +145,7 @@ export default class FloodMapApp extends Widget {
 
     const viewClick = view.on('click', this._viewClickHandler.bind(this));
 
-    this.own([selectResult, viewClick]);
+    this.own([selectResult, viewClick, printFIRMette]);
   }
 
   container = document.createElement('calcite-shell');
@@ -153,10 +160,14 @@ export default class FloodMapApp extends Widget {
 
   protected search!: Search;
 
-  protected info!: Info;
+  protected floodInfo!: FloodInfo;
+
+  protected printFIRMetteModal = new PrintFIRMetteModal();
 
   @property()
-  protected panelState: 'none' | 'info' | 'layers' | 'legend' | 'print' = 'info';
+  protected panelState: props['panelState'] = 'info';
+
+  private _infoPoint!: esri.Point;
 
   private async _viewClickHandler(event: esri.ViewClickEvent): Promise<void> {
     const {
@@ -166,42 +177,34 @@ export default class FloodMapApp extends Widget {
       },
       baseLayer,
       boundary,
-      info,
+      floodInfo,
     } = this;
     const { mapPoint } = event;
 
-    if (info.state === 'querying' || info.state === 'printing') return;
+    if (floodInfo.state === 'querying') return;
 
-    info.state = 'querying';
+    floodInfo.state = 'querying';
 
     // remove graphics
     graphics.removeAll();
 
     // check map point is in boundary
     if (!contains(boundary, mapPoint)) {
-      info.state = 'ready';
+      floodInfo.state = 'ready';
       return;
     }
+
+    this._infoPoint = mapPoint;
 
     graphics.add(
       new Graphic({
         geometry: mapPoint,
-        // symbol: new TextSymbol({
-        //   color: '#ed5151',
-        //   text: '\ue61d',
-        //   horizontalAlignment: 'center',
-        //   verticalAlignment: 'bottom',
-        //   font: {
-        //     size: 24,
-        //     family: 'CalciteWebCoreIcons',
-        //   },
-        // }),
         symbol: new SimpleMarkerSymbol({
           color: '#ed5151',
           style: 'circle',
-          size: 12,
+          size: 10,
           outline: {
-            width: 1.5,
+            width: 1.2,
             color: 'white',
           },
         }),
@@ -261,14 +264,12 @@ export default class FloodMapApp extends Widget {
       if (county === 'Columbia County') _info.firm = (columbiaFirm as esri.FeatureSet).features[0].attributes.FIRM_PAN;
     }
 
-    info.info = _info;
-
-    info.point = mapPoint;
+    floodInfo.info = _info;
 
     this.panelState = 'info';
 
     setTimeout((): void => {
-      info.state = 'info';
+      floodInfo.state = 'info';
     }, 2000);
   }
 
@@ -300,71 +301,39 @@ export default class FloodMapApp extends Widget {
           <calcite-action-bar slot="action-bar" expand-disabled="">
             <calcite-action-group>
               <calcite-action
-                id={tooltips[0]}
                 text="Flood Info"
                 icon="information"
                 active={panelState === 'info'}
-                afterCreate={(action: HTMLCalciteActionElement) => {
-                  action.addEventListener('click', (): void => {
-                    this.panelState = this.panelState === 'info' ? 'none' : 'info';
-                  });
-                }}
+                afterCreate={this._actionAfterCreate.bind(this, 'info')}
               ></calcite-action>
               <calcite-action
                 id={tooltips[1]}
                 text="Layers"
                 icon="layers"
                 active={panelState === 'layers'}
-                afterCreate={(action: HTMLCalciteActionElement) => {
-                  action.addEventListener('click', (): void => {
-                    this.panelState = this.panelState === 'layers' ? 'none' : 'layers';
-                  });
-                }}
+                afterCreate={this._actionAfterCreate.bind(this, 'layers')}
               ></calcite-action>
               <calcite-action
                 id={tooltips[2]}
                 text="Legend"
                 icon="legend"
                 active={panelState === 'legend'}
-                afterCreate={(action: HTMLCalciteActionElement) => {
-                  action.addEventListener('click', (): void => {
-                    this.panelState = this.panelState === 'legend' ? 'none' : 'legend';
-                  });
-                }}
+                afterCreate={this._actionAfterCreate.bind(this, 'legend')}
               ></calcite-action>
             </calcite-action-group>
             <calcite-action-group slot="bottom-actions">
-              <calcite-action id={tooltips[3]} text="About" icon="question"></calcite-action>
+              <calcite-action text="About" icon="question"></calcite-action>
             </calcite-action-group>
-
-            {/* tooltips */}
-            <calcite-tooltip close-on-click="" overlay-positioning="fixed" reference-element={tooltips[0]}>
-              Flood Info
-            </calcite-tooltip>
-            <calcite-tooltip close-on-click="" overlay-positioning="fixed" reference-element={tooltips[1]}>
-              Layers
-            </calcite-tooltip>
-            <calcite-tooltip close-on-click="" overlay-positioning="fixed" reference-element={tooltips[2]}>
-              Legend
-            </calcite-tooltip>
-            <calcite-tooltip close-on-click="" overlay-positioning="fixed" reference-element={tooltips[3]}>
-              About
-            </calcite-tooltip>
           </calcite-action-bar>
 
           {/* info panel */}
           <calcite-panel
-            heading="Flood Info"
-            show-back-button=""
             hidden={panelState !== 'info'}
-            afterCreate={this._closePanel.bind(this)}
-          >
-            <calcite-block
-              afterCreate={(container: HTMLCalciteBlockElement): void => {
-                this.info.container = container;
-              }}
-            ></calcite-block>
-          </calcite-panel>
+            afterCreate={(container: HTMLCalcitePanelElement): void => {
+              this._closePanel(container);
+              this.floodInfo.container = container;
+            }}
+          ></calcite-panel>
 
           {/* layers panel */}
           <calcite-panel
@@ -398,6 +367,22 @@ export default class FloodMapApp extends Widget {
         <div class={CSS.view} data-view-container=""></div>
       </calcite-shell>
     );
+  }
+
+  private _actionAfterCreate(panelState: props['panelState'], action: HTMLCalciteActionElement): void {
+    // wire click event to effect panel state
+    action.addEventListener('click', (): void => {
+      this.panelState = this.panelState === panelState ? 'none' : panelState;
+    });
+    // create tooltip
+    const id = `action_tt_${this.id}_${KEY++}`;
+    action.id = id;
+    const tooltip = document.createElement('calcite-tooltip');
+    tooltip.referenceElement = id;
+    tooltip.overlayPositioning = 'fixed';
+    tooltip.closeOnClick = true;
+    tooltip.innerHTML = action.text;
+    document.body.append(tooltip);
   }
 
   /**
@@ -573,206 +558,5 @@ export default class FloodMapApp extends Widget {
         </calcite-block>
       </div>
     );
-  }
-}
-
-/**
- * Widget to display flood info.
- */
-@subclass('Info')
-export class Info extends Widget {
-  postInitialize(): void {
-    watch(
-      () => this.state,
-      (state): void => {
-        if (state === 'ready' || state === 'querying') {
-          this._printState = 'ready';
-        }
-      },
-    );
-  }
-
-  @property()
-  state: 'ready' | 'querying' | 'info' | 'printing' = 'ready';
-
-  @property()
-  info = {
-    latitude: '',
-    longitude: '',
-    elevation: '',
-    section: '',
-    county: '',
-    zone: '',
-    description: '',
-    firm: '',
-    jurisdiction: '',
-  };
-
-  point!: esri.Point;
-
-  @property()
-  private _printState: 'ready' | 'printing' | 'printed' = 'ready';
-
-  private _printUrl = '';
-
-  render(): tsx.JSX.Element {
-    const {
-      state,
-      info: { latitude, longitude, elevation, section, county, zone, description, firm, jurisdiction },
-      _printState,
-    } = this;
-
-    return (
-      <calcite-block open="" style="margin: 0;">
-        <div hidden={state !== 'ready'}>
-          Click on a point of interest in the map or search for an address to display flood hazard information at that
-          location.
-        </div>
-        <div hidden={state !== 'querying'}>
-          <p>Querying Information</p>
-          <div class={CSS.progress}>
-            <calcite-progress type="indeterminate"></calcite-progress>
-          </div>
-        </div>
-        <div hidden={state !== 'info' && state !== 'printing'}>
-          <p class={CSS.info}>
-            <strong>Location</strong>
-            <span>Latitude: {latitude}</span>
-            <span>Longitude: {longitude}</span>
-            <span>Elevation: {elevation}</span>
-            <span>Section: {section}</span>
-            <span>County: {county}</span>
-          </p>
-          <p class={CSS.info}>
-            <strong>{zone}</strong>
-            <span>{description}</span>
-            <span hidden={firm === ''}>
-              <calcite-link href="#">FIRM Panel {firm}</calcite-link>
-            </span>
-          </p>
-          <p class={CSS.info}>
-            <strong>Floodplain Management</strong>
-            <span>
-              <calcite-link href="#">{jurisdiction}</calcite-link>
-            </span>
-          </p>
-          <calcite-button
-            hidden={_printState !== 'ready'}
-            width="full"
-            appearance="outline"
-            icon-start="print"
-            afterCreate={(button: HTMLCalciteButtonElement): void => {
-              button.addEventListener('click', this._print.bind(this));
-            }}
-          >
-            Print FIRMette
-          </calcite-button>
-          <calcite-button hidden={_printState !== 'printing'} width="full" appearance="outline" loading="">
-            Printing FIRMette
-          </calcite-button>
-          <calcite-button
-            hidden={_printState !== 'printed'}
-            width="full"
-            appearance="outline"
-            icon-start="download"
-            afterCreate={(button: HTMLCalciteButtonElement): void => {
-              button.addEventListener('click', this._printDownload.bind(this));
-            }}
-          >
-            Download FIRMette
-          </calcite-button>
-        </div>
-      </calcite-block>
-    );
-  }
-
-  private _print(): void {
-    const { point, _printState } = this;
-
-    if (!point || _printState !== 'ready') return;
-
-    this.state = 'printing';
-    this._printState = 'printing';
-
-    esriRequest(
-      'https://msc.fema.gov/arcgis/rest/services/NFHL_Print/AGOLPrintB/GPServer/Print%20FIRM%20or%20FIRMette/submitJob',
-      {
-        responseType: 'json',
-        query: {
-          f: 'json',
-          FC: JSON.stringify({
-            geometryType: 'esriGeometryPoint',
-            features: [{ geometry: { x: point.x, y: point.y, spatialReference: { wkid: 102100 } } }],
-            sr: { wkid: 102100 },
-          }),
-          Print_Type: 'FIRMETTE',
-          graphic: 'PDF',
-          input_lat: 29.877,
-          input_lon: -81.2837,
-        },
-      },
-    )
-      .then(this._printCheck.bind(this))
-      .catch((error: esri.Error): void => {
-        console.log('submit job error', error);
-        // TODO: inform user
-      });
-  }
-
-  private _printCheck(response: any): void {
-    const data: { jobId: string; jobStatus: string } = response.data;
-
-    if (data.jobStatus === 'esriJobSubmitted' || data.jobStatus === 'esriJobExecuting') {
-      esriRequest(
-        `https://msc.fema.gov/arcgis/rest/services/NFHL_Print/AGOLPrintB/GPServer/Print%20FIRM%20or%20FIRMette/jobs/${data.jobId}`,
-        {
-          responseType: 'json',
-          query: {
-            f: 'json',
-          },
-        },
-      )
-        .then((response: any): void => {
-          setTimeout(this._printCheck.bind(this, response), 1000);
-        })
-        .catch((error: esri.Error): void => {
-          console.log('check job error', error);
-          // TODO: inform user
-        });
-    } else if (data.jobStatus === 'esriJobSucceeded') {
-      this._printComplete(response);
-    } else {
-      console.log('server job error', response);
-      // TODO: inform user
-    }
-  }
-
-  private _printComplete(response: any): void {
-    const data: { jobId: string; jobStatus: string; results: { OutputFile: { paramUrl: string } } } = response.data;
-
-    esriRequest(
-      `https://msc.fema.gov/arcgis/rest/services/NFHL_Print/AGOLPrintB/GPServer/Print%20FIRM%20or%20FIRMette/jobs/${data.jobId}/${data.results.OutputFile.paramUrl}`,
-      {
-        responseType: 'json',
-        query: {
-          f: 'json',
-        },
-      },
-    )
-      .then((response: any): void => {
-        this._printUrl = response.data.value.url.replace('http://', 'https://');
-        this.state = 'info';
-        this._printState = 'printed';
-      })
-      .catch((error: esri.Error): void => {
-        console.log('get job error', error);
-        // TODO: inform user
-      });
-  }
-
-  private _printDownload(): void {
-    const { _printUrl } = this;
-
-    if (_printUrl) window.open(_printUrl, '_blank');
   }
 }
