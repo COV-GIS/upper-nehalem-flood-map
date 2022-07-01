@@ -139,20 +139,6 @@ $box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
   width: 100%;
 }
 
-.flood-map-app--progress {
-  padding-bottom: 1rem;
-}
-
-.flood-map-app--info {
-  display: flex;
-  flex-flow: column;
-  gap: 0.1875rem;
-  margin: 1rem 0;
-  &:first-child {
-    margin-top: 0;
-  }
-}
-
 .esri-search {
   width: 25vw;
   min-width: 240px;
