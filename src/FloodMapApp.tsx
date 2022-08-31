@@ -293,7 +293,11 @@ export default class FloodMapApp extends Widget {
     return (
       <calcite-shell class={CSS.base} content-behind="">
         {/* header */}
-        {this._createHeader()}
+        {/* {this._createHeader()} */}
+        
+        <div class={CSS.header} slot="header">
+          Upper Nehalem Flood Map
+        </div>
 
         {/* widgets panel */}
         <calcite-shell-panel detached="" slot="primary-panel" position="start" collapsed={panelState === 'none'}>
@@ -396,6 +400,34 @@ export default class FloodMapApp extends Widget {
   }
 
   private _createHeader(): tsx.JSX.Element {
+
+    return (
+      <div
+      // class="navbar navbar-expand-lg navbar-dark bg-primary"
+      class={this.classes(CSS.header, 'bootstrap')} slot="header"
+      >
+        <div class="container">
+          <a href="/" class="navbar-brand">Upper Nehalem Flood</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#headerNavbar">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="headerNavbar">
+            <ul class="navbar-nav ms-md-auto"><li class="nav-item">
+              <a class="nav-link" href="/be-prepared/">Be Prepared</a>
+            </li><li class="nav-item">
+                <a class="nav-link" href="/news/">News</a>
+              </li><li class="nav-item">
+                <a class="nav-link" href="/river-and-weather/">River and Weather</a>
+              </li><li class="nav-item">
+                <a class="nav-link" href="https://sage-meerkat-23394f.netlify.app/">Map</a>
+              </li><li class="nav-item">
+                <a class="nav-link active" href="/projects/">Projects</a>
+              </li></ul>
+          </div>
+        </div>
+      </div>
+    );
+
     return (
       <div class={this.classes(CSS.header, 'bootstrap')} slot="header">
         <div class="px-3 py-2 navbar-dark bg-dark text-white d-none d-lg-block">
