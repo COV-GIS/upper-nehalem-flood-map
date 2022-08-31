@@ -28,9 +28,15 @@ export default class PrintFIRMetteModal extends Widget {
    * @param point esri.Point
    */
   print(point: esri.Point): void {
-    const { container, state } = this;
+    const { container, state, _point, _printUrl } = this;
+    if (_point && _point === point && _printUrl) {
+      this.state = 'printed';
+      container.active = true;
+      return;
+    }
     if (state !== 'printing') this.state = 'printing';
     this._point = point;
+    this._printUrl = null;
     this._print(point);
     container.active = true;
   }
@@ -40,7 +46,7 @@ export default class PrintFIRMetteModal extends Widget {
 
   private _point!: esri.Point;
 
-  private _printUrl!: string;
+  private _printUrl!: string | null;
 
   private _print(point: esri.Point): void {
     esriRequest(

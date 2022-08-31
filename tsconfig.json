@@ -16,7 +16,7 @@
     "types": [
       "@esri/calcite-components",
       "luxon",
-      "papaparse"
+      "page"
     ]
   },
   "include": [

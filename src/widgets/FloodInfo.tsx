@@ -74,6 +74,19 @@ export default class FloodInfo extends Widget {
                 button.addEventListener('click', () => {
                   this.emit('print-firmette');
                 });
+
+
+                // create tooltip
+                const id = `print_button_tt_${this.id}`;
+                button.id = id;
+                const tooltip = document.createElement('calcite-tooltip');
+                tooltip.referenceElement = id;
+                tooltip.overlayPositioning = 'fixed';
+                tooltip.placement = 'top';
+                tooltip.closeOnClick = true;
+                tooltip.innerHTML = 'Print FEMA FIRMette at this location';
+                document.body.append(tooltip);
+
               }}
             >
               FIRMette

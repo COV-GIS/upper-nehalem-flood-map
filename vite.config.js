@@ -1,5 +1,7 @@
 // https://vitejs.dev/config/
 
+import { VitePWA } from 'vite-plugin-pwa';
+
 export default {
   // where's the source
   root: './src',
@@ -20,4 +22,8 @@ export default {
     // to build esri widgets properly
     jsxFactory: 'tsx',
   },
+
+  plugins: [
+    VitePWA(),
+  ],
 };
