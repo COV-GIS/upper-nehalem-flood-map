@@ -3,15 +3,12 @@ import Widget from '@arcgis/core/widgets/Widget';
 import { tsx } from '@arcgis/core/widgets/support/widget';
 
 const CSS = {
-  info: 'flood-info--info',
-  progress: 'flood-info--progress',
+  content: 'flood-info_content',
+  info: 'flood-info_info',
 };
 
 @subclass('FloodInfo')
 export default class FloodInfo extends Widget {
-  @property()
-  state: 'ready' | 'querying' | 'info' = 'ready';
-
   @property()
   info = {
     latitude: '',
@@ -25,25 +22,47 @@ export default class FloodInfo extends Widget {
     jurisdiction: '',
   };
 
+  @property()
+  state: 'ready' | 'querying' | 'info' = 'ready';
+
   render(): tsx.JSX.Element {
     const {
-      state,
       info: { latitude, longitude, elevation, section, county, zone, description, firm, jurisdiction },
+      state,
     } = this;
-
     return (
-      <calcite-panel heading="Flood Info" show-back-button="">
-        <calcite-block open="" style="margin: 0;">
-          <div hidden={state !== 'ready'}>
-            Click on a point of interest in the map or search for an address to display flood hazard information at that
-            location.
-          </div>
-          <div hidden={state !== 'querying'}>
-            <p>Querying Information</p>
-            <div class={CSS.progress}>
-              <calcite-progress type="indeterminate"></calcite-progress>
+      <calcite-panel heading="Flood Info">
+        <calcite-button
+          width="full"
+          appearance="outline"
+          hidden={state !== 'info'}
+          icon-start="print"
+          slot={state === 'info' ? 'footer-actions' : ''}
+          afterCreate={(button: HTMLCalciteButtonElement): void => {
+            button.addEventListener('click', () => {
+              this.emit('print-firmette');
+            });
+          }}
+        >
+          FIRMette
+        </calcite-button>
+
+        <div class={CSS.content}>
+          <calcite-notice open="" icon="cursor" hidden={state !== 'ready'}>
+            <div slot="message">
+              Click on a point of interest in the map or search for an address to display flood hazard information at
+              that location
             </div>
-          </div>
+          </calcite-notice>
+
+          <calcite-loader
+            active={state === 'querying'}
+            hidden={state !== 'querying'}
+            scale="s"
+            text="Querying flood info"
+            type="indeterminate"
+          ></calcite-loader>
+
           <div hidden={state !== 'info'}>
             <p class={CSS.info}>
               <strong>Location</strong>
@@ -66,20 +85,8 @@ export default class FloodInfo extends Widget {
                 <calcite-link href="#">{jurisdiction}</calcite-link>
               </span>
             </p>
-            <calcite-button
-              width="full"
-              appearance="outline"
-              icon-start="print"
-              afterCreate={(button: HTMLCalciteButtonElement): void => {
-                button.addEventListener('click', () => {
-                  this.emit('print-firmette');
-                });
-              }}
-            >
-              FIRMette
-            </calcite-button>
           </div>
-        </calcite-block>
+        </div>
       </calcite-panel>
     );
   }

@@ -7,7 +7,7 @@ import { tsx } from '@arcgis/core/widgets/support/widget';
 
 // styles
 const CSS = {
-  content: 'print-firmette-modal--content',
+  content: 'print-firmette-modal_content',
 };
 
 /**
@@ -32,7 +32,7 @@ export default class PrintFIRMetteModal extends Widget {
     if (state !== 'printing') this.state = 'printing';
     this._point = point;
     this._print(point);
-    container.active = true;
+    container.open = true;
   }
 
   @property()
@@ -118,7 +118,7 @@ export default class PrintFIRMetteModal extends Widget {
 
   private _close(): void {
     const { container } = this;
-    container.active = false;
+    container.open = false;
     this.state = 'printing';
   }
 
