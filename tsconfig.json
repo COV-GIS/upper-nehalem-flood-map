@@ -15,7 +15,7 @@
     "jsxFactory": "tsx",
     "types": [
       "@esri/calcite-components",
-      "luxon"
+      "luxon",
     ]
   },
   "include": [
